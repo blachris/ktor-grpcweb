@@ -47,7 +47,7 @@ ext.pomConfig = {
     }
 
     scm {
-        url "https://github.com/gordonmu/coio.git"
+        url "https://github.com/gordonmu/ktor-grpcweb.git"
     }
 }
 
