@@ -1,0 +1,176 @@
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+buildscript {
+    ext.kotlin_version = '1.4.0'
+    ext.kotlinxcoroutine_version = '1.4.0'
+    ext.kotlinlogging_version = '1.8.3'
+    ext.grpc_version = '1.34.1'
+    ext.jackson_version = '2.9.8'
+    ext.slf4j_version = '1.7.30'
+    ext.log4jslf4j_version = '2.13.3'
+    ext.junit5_version = '5.6.2'
+    ext.mockk_version = '1.10.0'
+    ext.assertj_version = '3.17.2'
+    ext.awaitility_version = '4.0.3'
+	ext.ktor_version = '1.5.0'
+    ext.guava_version = '29.0-jre'
+
+    ext.repos = {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+
+    repositories repos
+
+    dependencies {
+        classpath group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: "$kotlin_version"
+        classpath group: 'com.jfrog.bintray.gradle', name: 'gradle-bintray-plugin', version: '1.+'
+    }
+}
+
+if (!project.hasProperty('bintrayUser'))
+    ext.bintrayUser = ''
+if (!project.hasProperty('bintrayApikey'))
+    ext.bintrayApikey = ''
+ext.pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+
+    scm {
+        url "https://github.com/gordonmu/coio.git"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+group 'com.github.gordonmu.ktor-grpcweb'
+version = '0.1.0'
+if (!project.hasProperty("release")) {
+	version += '-SNAPSHOT'
+}
+
+repositories repos
+
+compileKotlin {
+	kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+	kotlinOptions.jvmTarget = "1.8"
+}
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+jar {
+	manifest {
+		attributes(
+				'Implementation-Version': rootProject.version,
+				'Implementation-Title': rootProject.name,
+				'Created-By': "Gradle ${gradle.gradleVersion}",
+				'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+				'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+		)
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
+
+javadoc.options.addStringOption('Xdoclint:none', '-quiet')
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	from javadoc.destinationDir
+	archiveClassifier.set('javadoc')
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	from sourceSets.main.allSource
+	archiveClassifier.set('sources')
+}
+
+artifacts {
+	archives sourcesJar
+	archives javadocJar
+}
+
+dependencies {
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: "$kotlin_version"
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: "$kotlinxcoroutine_version"
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: "$kotlinxcoroutine_version"
+    implementation group: 'io.github.microutils', name: 'kotlin-logging', version: "$kotlinlogging_version"
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+	api group: 'io.ktor', name: 'ktor-server-core', version: "$ktor_version"
+	implementation group: 'io.grpc', name: 'grpc-protobuf', version: "$grpc_version"
+    api group: 'io.grpc', name: 'grpc-core', version: "$grpc_version"
+
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: "$assertj_version"
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junit5_version"
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "$junit5_version"
+    testRuntimeOnly group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: "$log4jslf4j_version"
+    testImplementation group: 'io.mockk', name: 'mockk', version: "$mockk_version"
+    testImplementation group: 'org.awaitility', name: 'awaitility', version: "$awaitility_version"
+    testImplementation group: 'org.awaitility', name: 'awaitility-kotlin', version: "$awaitility_version"
+
+    testImplementation group: 'io.ktor', name: 'ktor-server-netty', version: "$ktor_version"
+    testImplementation group: 'io.ktor', name: 'ktor-http', version: "$ktor_version"
+    testImplementation group: 'io.ktor', name: 'ktor-client-cio', version: "$ktor_version"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            groupId project.group
+            artifactId project.name
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'An embedded gRPC Web proxy for Ktor.')
+                root.appendNode('name', 'Embedded Ktor gRPC Web proxy')
+                root.appendNode('url', 'https://github.com/gordonmu/ktor-grpcweb')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = bintrayUser
+    key = bintrayApikey
+    publications = ['maven']
+
+    pkg {
+        repo = 'jvm'
+        name = project.name
+        description = 'An embedded gRPC Web proxy for Ktor.'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/gordonmu/ktor-grpcweb.git'
+        version {
+            name = project.version
+            desc = project.version
+            released = new Date()
+        }
+    }
+}
+
