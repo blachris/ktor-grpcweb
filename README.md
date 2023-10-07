@@ -1,5 +1,5 @@
-![Java CI](https://github.com/gordonmu/ktor-grpcweb/workflows/Java%20CI/badge.svg)
- [ ![Download](https://api.bintray.com/packages/gordonmu/jvm/ktor-grpcweb/images/download.svg) ](https://bintray.com/gordonmu/jvm/ktor-grpcweb/_latestVersion)
+![Java CI](https://github.com/blachris/ktor-grpcweb/workflows/Java%20CI/badge.svg)
+ [ ![Download](https://api.bintray.com/packages/blachris/jvm/ktor-grpcweb/images/download.svg) ](https://bintray.com/blachris/jvm/ktor-grpcweb/_latestVersion)
 
 # Embedded gRPC Web Proxy for Ktor
 An embedded [gRPC Web](https://github.com/grpc/grpc-web) proxy for Java/Kotlin [gRPC](https://grpc.io/) servers 

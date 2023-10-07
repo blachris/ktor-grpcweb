@@ -1,19 +1,19 @@
 apply plugin: 'idea'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 buildscript {
-    ext.kotlin_version = '1.4.0'
-    ext.kotlinxcoroutine_version = '1.4.0'
+    ext.kotlin_version = '1.8.22'
+    ext.kotlinxcoroutine_version = '1.7.3'
     ext.kotlinlogging_version = '1.8.3'
     ext.grpc_version = '1.34.1'
     ext.jackson_version = '2.9.8'
-    ext.slf4j_version = '1.7.30'
-    ext.log4jslf4j_version = '2.13.3'
+    ext.slf4j_version = '1.7.36'
+    ext.log4jslf4j_version = '2.20.0'
     ext.junit5_version = '5.6.2'
     ext.mockk_version = '1.10.0'
     ext.assertj_version = '3.17.2'
     ext.awaitility_version = '4.0.3'
-	ext.ktor_version = '1.5.0'
+	ext.ktor_version = '1.6.8'
     ext.guava_version = '29.0-jre'
 
     ext.repos = {
@@ -33,10 +33,6 @@ buildscript {
     }
 }
 
-if (!project.hasProperty('bintrayUser'))
-    ext.bintrayUser = ''
-if (!project.hasProperty('bintrayApikey'))
-    ext.bintrayApikey = ''
 ext.pomConfig = {
     licenses {
         license {
@@ -47,17 +43,16 @@ ext.pomConfig = {
     }
 
     scm {
-        url "https://github.com/gordonmu/ktor-grpcweb.git"
+        url "https://github.com/blachris/ktor-grpcweb.git"
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'signing'
 
-group 'com.github.gordonmu.ktor-grpcweb'
-version = '0.1.0'
+group 'com.github.blachris.ktor-grpcweb'
+version = '0.2.0'
 if (!project.hasProperty("release")) {
 	version += '-SNAPSHOT'
 }
@@ -133,44 +128,62 @@ dependencies {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
             artifact sourcesJar {
-                classifier "sources"
+                archiveClassifier.set("sources")
             }
             artifact javadocJar {
-                classifier "javadoc"
+                archiveClassifier.set("javadoc")
             }
             groupId project.group
             artifactId project.name
             version project.version
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('description', 'An embedded gRPC Web proxy for Ktor.')
-                root.appendNode('name', 'Embedded Ktor gRPC Web proxy')
-                root.appendNode('url', 'https://github.com/gordonmu/ktor-grpcweb')
-                root.children().last() + pomConfig
+            pom {
+                name = 'Embedded Ktor gRPC Web proxy'
+                description = 'An embedded gRPC Web proxy for Ktor.'
+                url = 'https://github.com/blachris/ktor-grpcweb'
+
+                licenses {
+                    license {
+                        name = "The Apache Software License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:https://github.com/blachris/grpcweb.git'
+                    developerConnection = 'scm:git:https://github.com/blachris/ktor-grpcweb.git'
+                    url = 'https://github.com/blachris/ktor-grpcweb'
+                }
+
+                developers {
+                    developer {
+                        id = 'blachris'
+                        name = 'Christopher Schwarzer'
+                        email = '70778512+blachris@users.noreply.github.com'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
+                    username = ossrhUsername
+                    password = ossrhPassword
+                }
             }
         }
     }
 }
 
-bintray {
-    user = bintrayUser
-    key = bintrayApikey
-    publications = ['maven']
-
-    pkg {
-        repo = 'jvm'
-        name = project.name
-        description = 'An embedded gRPC Web proxy for Ktor.'
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/gordonmu/ktor-grpcweb.git'
-        version {
-            name = project.version
-            desc = project.version
-            released = new Date()
-        }
+if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')) {
+    signing {
+        sign publishing.publications.mavenJava
     }
 }
+
 

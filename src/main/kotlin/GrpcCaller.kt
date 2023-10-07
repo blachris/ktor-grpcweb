@@ -1,4 +1,4 @@
-package com.github.gordonmu.ktor_grpcweb
+package com.github.blachris.ktor_grpcweb
 
 import com.google.protobuf.ByteString
 import io.grpc.*
@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.lang.Integer.max
 import java.util.concurrent.CancellationException
@@ -52,7 +53,9 @@ private class ClientCallListener(channelSize: Int) : ClientCall.Listener<ByteStr
     val responses: ReceiveChannel<ByteString> = respChannel
 
     override fun onMessage(message: ByteString) {
-        respChannel.sendBlocking(message)
+        runBlocking {
+            respChannel.send(message)
+        }
     }
 
     override fun onHeaders(headers: io.grpc.Metadata) {

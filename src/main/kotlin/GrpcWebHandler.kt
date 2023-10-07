@@ -1,4 +1,4 @@
-package com.github.gordonmu.ktor_grpcweb
+package com.github.blachris.ktor_grpcweb
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.UnsafeByteOperations
